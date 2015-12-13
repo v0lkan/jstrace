@@ -1,3 +1,7 @@
+### kiraz v.0.2.2
+
+* Fixed a regression regarding the retry logic.
+
 ### kiraz v.0.2.0
 
 * Initially working version.
