@@ -6,10 +6,6 @@ kiraz enables dynamic tracing to Node.JS applications without needing to install
 
 ...
 
-> **CAVEAT**
->
-> I’ve changed the package name and the executable name so that it does not conflict with `jstrace`.
-
 This is a forked version of [jstrace] that allows ability to programmatically start the communication server so that we don't create a socket server if we don't need to. The script also allows us to bind to an arbitrary server (instead of `0.0.0.0:4322`).
 
 Below is what I've copied from the original README; I have not updated it yet, so parts of it might not be accurate.
