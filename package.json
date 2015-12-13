@@ -1,8 +1,8 @@
 {
-  "name": "jstrace",
-  "version": "0.3.0",
-  "repository": "segmentio/jstrace",
-  "description": "dynamic tracing written in javascript (similar to dtrace/ktap etc)",
+  "name": "kiraz",
+  "version": "0.2.0",
+  "repository": "v0lkan/jstrace",
+  "description": "A fork of http://github.com/jstrace/jstrace",
   "keywords": [
     "trace",
     "dtrace",
@@ -30,6 +30,6 @@
   "license": "MIT",
   "main": "lib/provider",
   "bin": {
-    "jstrace": "bin/jstrace"
+    "kiraz": "bin/jstrace"
   }
 }

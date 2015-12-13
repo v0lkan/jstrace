@@ -1,3 +1,80 @@
+# About `kiraz`
+
+> This **README** is in draft mode; **do not trust anything you read here**.
+
+> **CAVEAT**
+>
+> I’ve changed the package name and the executable name so that it does not conflict with `jstrace`.
+
+This is a forked version of [jstrace] that allows ability to programmatically start the communication server so that we don't create a socket server if we don't need to. The script also allows us to bind to an arbitrary server (instead of `0.0.0.0:4322`).
+
+Below is what I've copied from the original README; I have not updated it yet, so parts of it might not be accurate.
+
+// TODO: add an environment support section.
+
+> **NOTICE**
+>
+> Do not read below here; it's from the forked repo and heavily needs an update.
+
+Basic usage:
+
+In script
+
+```js
+var kiraz = require('kiraz');
+
+kiraz.start();
+
+...
+
+kiraz.trace('request:started', value);
+```
+
+In the instrumentor node:
+
+```bash
+npm install kiraz -g
+```
+
+given
+
+```js
+// trace.js
+exports.local = function( traces ) {
+    traces.on( '*', function( n ) {
+        console.log( 'hello', n );
+    } );
+
+    console.log( 'Started listening to all the things…' );
+};
+```
+
+call:
+
+```
+kiraz trace.js
+```
+
+I'll clean up this README whenever I have time.
+
+Here are a few horizontal rules to indicate that you should **stop reading here**:
+
+--------
+
+--------
+
+--------
+
+---------
+
+--------
+
+--------
+
+--------
+
+---------
+
 # jstrace
 
   Dynamic tracing for JavaScript, written in JavaScript, providing you insight into your live nodejs applications, at the process, machine, or cluster level.
