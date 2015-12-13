@@ -1,6 +1,10 @@
 # About `kiraz`
 
+kiraz enables dynamic tracing to Node.JS applications without needing to install dtrace
+
 > This **README** is in draft mode; **do not trust anything you read here**.
+
+...
 
 > **CAVEAT**
 >
