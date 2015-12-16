@@ -52,9 +52,7 @@ When **debugging** a live app, you’ll have to restart your app in *debug mode*
 
 ## Is `kiraz` a dtrace|strace|ktap|etc. Replacement?
 
-Short answer:
-
-**No**.
+Short answer: **No**.
 
 At its very core, `kiraz` is a TCP client/server *pubsub* program that enables the user to inject and remotely execute tracing code.
 
@@ -226,11 +224,11 @@ The output should look similar to this:
 
 ## Hey, I'm Stuck!
 
-For any issues that you stumble upon, [feel free to open a ticket][create-issue], or [send and email][volkan].
+For any issues that you stumble upon, [feel free to open a ticket][create-issue], or [send an email][volkan].
 
 ## Versioning and Backwards Compatibility
 
-`sif` follows [semantic versioning][semver] rules, and it is versioned in the "**major**.**minor**.**patch**" format.
+`kiraz` follows [semantic versioning][semver] rules, and it is versioned in the "**major**.**minor**.**patch**" format.
 
 * Any breaking backwards-incompatible change will increment the **major** version number.
 * Any backwards-compatible enhancement will increment the **minor** version
@@ -241,7 +239,7 @@ number.
 
 Contributors are more than welcome.
 
-You can help make `sif` even better by:
+You can help make `kiraz` even better by:
 
 * [Suggesting new features by opening issues][create-issue].
 * [Cleaning up open issues][issues].
