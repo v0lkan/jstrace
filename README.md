@@ -282,7 +282,7 @@ We are committed to making participation in this project a harassment-free exper
 
 [brendan]: http://www.brendangregg.com/index.html "About monitoring, performance, and all the things in between"
 [c9-debugging]: https://docs.c9.io/docs/running-and-debugging-code "Debugging in Cloud9 IDE"
-[contributors]: https://github.com/jstrace/jstrace/graphs/contributors "JSTrace Contributors"
+[contributors]: https://github.com/v0lkan/kiraz/graphs/contributors "Contributions to kiraz so far"
 [create-issue]: https://github.com/v0lkan/kiraz/issues/new "Create an Issue"
 [debugger]: https://nodejs.org/api/debugger.html "Node.JS Debugger"
 [dtrace]: http://www.oracle.com/technetwork/server-storage/solaris/dtrace-tutorial-142317.html "Dtrace Tutorial"
