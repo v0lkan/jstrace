@@ -1,3 +1,14 @@
+'use strict';
+
+/*
+ * __.--~~.,-.__            «« kiraz — tap into live Node.JS apps »»
+ * `~-._.-(`-.__`-.
+ *         \     This program is distributed under the terms of the MIT license.
+ *          \--.       Please see the `LICENSE.md` file for details.
+ *         /#   \
+ *         \    /            Send your comments and suggestions to:
+ *          '--'            <https://github.com/v0lkan/kiraz/issues>
+ */
 
 var utils = require('../lib/utils');
 var assert = require('assert');
