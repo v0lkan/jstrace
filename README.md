@@ -220,7 +220,7 @@ node server.js
 
 Now you should be able to see an “*event loop delay*” on the terminal of the “**bastion**” virtual container.
 
-The out put should look similar to this:
+The output should look similar to this:
 
 ![event loop delay chart](assets/chart-event-loop-delay.png)
 
