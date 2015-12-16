@@ -230,7 +230,7 @@ For any issues that you stumble upon, [feel free to open a ticket][create-issue]
 
 ## Versioning and Backwards Compatibility
 
-`sif` follows [semantic versioning][semver] rules, and it is versioned in the "**major**.**minor**.**patch**" format.
+`kiraz` follows [semantic versioning][semver] rules, and it is versioned in the "**major**.**minor**.**patch**" format.
 
 * Any breaking backwards-incompatible change will increment the **major** version number.
 * Any backwards-compatible enhancement will increment the **minor** version
@@ -241,7 +241,7 @@ number.
 
 Contributors are more than welcome.
 
-You can help make `sif` even better by:
+You can help make `kiraz` even better by:
 
 * [Suggesting new features by opening issues][create-issue].
 * [Cleaning up open issues][issues].
