@@ -165,8 +165,7 @@ And put the following code to **bastion**:
 
 'use strict';
 
-// TODO: this library has not been put to the NMP yet.
-import chart from './chart';
+import chart from 'darth';
 import clear from 'clear';
 
 exports.local = ( traces ) => {
