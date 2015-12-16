@@ -1,3 +1,9 @@
+### kiraz v.0.2.4
+
+* Updated the README, added a usage example.
+* Applied “strict mode” to all the things.
+* Minor bugfixes.
+
 ### kiraz v.0.2.2
 
 * Fixed a regression regarding the retry logic.

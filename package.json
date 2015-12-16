@@ -1,8 +1,8 @@
 {
   "name": "kiraz",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "repository": "v0lkan/jstrace",
-  "description": "A fork of http://github.com/jstrace/jstrace",
+  "description": "kiraz gives a dynamic insight into your **live** Node.JS apps.",
   "keywords": [
     "trace",
     "dtrace",

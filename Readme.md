@@ -1,421 +1,302 @@
-# About `kiraz`
-
-kiraz enables dynamic tracing to Node.JS applications without needing to install dtrace
-
-> This **README** is in draft mode; **do not trust anything you read here**.
-
-...
-
-This is a forked version of [jstrace] that allows ability to programmatically start the communication server so that we don't create a socket server if we don't need to. The script also allows us to bind to an arbitrary server (instead of `0.0.0.0:4322`).
-
-Below is what I've copied from the original README; I have not updated it yet, so parts of it might not be accurate.
-
-// TODO: add an environment support section.
-
-> **NOTICE**
->
-> Do not read below here; it's from the forked repo and heavily needs an update.
-
-Basic usage:
-
-In script
-
-```js
-var kiraz = require('kiraz');
-
-kiraz.start();
-
-...
-
-kiraz.trace('request:started', value);
+```
+__.--~~.,-.__
+`~-._.-(`-.__`-.
+        \
+         \--.
+        /#   \
+,--.    \    /
+|  |,-.  '--' ,--.--.  ,--,--. ,-----.
+|     /  |  | |  .--' ' ,-.  | `-.  /
+|  \  \  |  | |  |    \ '-'  |  /  `-.
+`--'`-- tap into live Node.JS apps -'
 ```
 
-In the instrumentor node:
+## Summary
+
+`kiraz` gives a dynamic insight into your **live** *Node.JS* apps. It’s a tracing tool written in **JavaScript**, for **JavaScript**.
+
+What `kiraz` provides is known as “**[dynamic tracing][dynamic-process-analysis]**”:
+
+> The goal of **dynamic tracing** is to enable a rich set of debugging information in **live processes**, *often in production*, to help discover the *root cause* of an issue.
+
+## Say What?
+
+`kiraz` enables “*tapping*” into your **Node.JS** apps without needing to install things like [`dtrace`][dtrace] or [`ktap`][ktap].
+
+If that rings a bell, skip to the next section. Otherwise, you might want to [read about `dtrace` first][dtrace].
+
+And while you’re at it, you might like looking into the following tools and technologies too:
+
+* [**Vantage** creates a **REPL** to observe your running **Node.JS** app in real time][vantage].
+* [**Brendan D. Gregg** has excellent blog posts about all things related to **dynamic tracing** and **flame graphs**][brendan].
+
+## Well, Isn’t This the Same as “*Debugging*”?
+
+*Dynamic tracing* and *debugging* are different and **complementary** tools to help you root cause an issue.
+
+When **debugging** a live app, you’ll have to restart your app in *debug mode*. Additionally, most of the time you’ll have to freeze your app at certain breakpoints to investigate the state and context of it. — Having to restart your app makes it **hard** (*if not impossible*) to debug production systems. Here’s why:
+
+* Stopping at debug **breakpoints** will freeze your app, and your users will not be able to use it; so you’ll have to direct the traffic elsewhere. — This is not always possible for production instances.
+* To enable debug mode, you’ll have to **restart** the app; which means you’ll lose valuable state information. Also restarting the app will reset its state, and it will be harder to recreate the exact conditions to reproduce the problem.
+* Restarting the app will make your users **unhappy** if not done carefully (*i.e., you’ll need to redirect traffic to a backup instance, wait for existing connections to close — it is a **tedious** process*).
+
+**Tracing**, on the other hand, enables you to put **probes** into your running system. You can look at those probes whenever you like. You won’t have to restart your server. Ergo, you won’t need to worry about losing valuable state information. Moreover, you won’t be annoying your users either.
+
+> While we are on the topic of **debugging**, [you might want to look at **Joyent**’s guide on **Node.JS** debugging][joyent-debug]; or [investigate how the **Node.JS** debugger works][debugger]. — You might also want to read about [how remote debugging works in **Eclipse**][eclipse-debugging], [how to remotely debug apps using **WebStorm**][webstorm-debugging], or in [how easy it is to debug in the **Cloud9 IDE**][c9-debugging].
+
+## Wait A Minute — Isn’t There [`jstrace`][jstrace] For That Already?
+
+`kiraz` is the immediate successor of [`jstrace`][jstrace], and aside from a few minor changes, `kiraz`’s usage is fully compatible with `jstrace`.
+
+`kiraz` has been built on top `jstrace` to provide **additional features**, **flexibility**, and **configurability**.
+
+## Is `kiraz` a dtrace|strace|ktap|etc. Replacement?
+
+Short answer:
+
+**No**.
+
+At its very core, `kiraz` is a TCP client/server *pubsub* program that enables the user to inject and remotely execute tracing code.
+
+Tools like [`dtrace`][dtrace], however, are **kernel-level** instrumentation programs.
+
+`kiraz` operates at a much *higher* level. — This means it does not give you the  spectrum of probes that those kernel-level tools have. Therefore, you’ll need to add your own tracing logic your programs, which is not too much of a deal anyway (*see [the usage examples](#usage-examples) section for details*).
+
+## Can I Use `kiraz` In Production?
+
+**Absolutely!**
+
+`kiraz` will have near-zero impact on the application’s performance when it’s idle, and it will have **negligible** performance impact when it’s in use. Hence, it’s safe to use it in production.
+
+> **Note**
+>
+> If you use `kiraz` in production, and want to provide feedback, please [create an issue][create-issue].
+
+## Dependencies
+
+`kiraz` has been tested to work on **Node.JS v.5.x**. And it will probably work on other versions of **[Node.JS][nodejs]** too. You’ll need [Node.JS][nodejs] and [npm][npm] to use `kiraz`.
+
+## Supported Operating Systems
+
+Kiraz does not have any OS-specific dependencies; therefore it will probably work on Unix, Solaris, Mac OS, and Windows.
+
+If you have problems running `kiraz` in your operating system, [please create an issue][create-issue].
+
+## How to Install
+
+`kiraz` has two components:
+
+* A global application that you run on the **Communication Node**
+* And a **Node.JS** *module** that you `import` into your app
+
+For the former, you’ll need to…
 
 ```bash
 npm install kiraz -g
 ```
 
-given
+And for the latter you’ll need to do a…
 
-```js
-// trace.js
-exports.local = function( traces ) {
-    traces.on( '*', function( n ) {
-        console.log( 'hello', n );
+```bash
+npm install kiraz --save
+```
+
+in your project folder.
+
+These two commands will be enough to get you started **;)**.
+
+## Usage Examples
+
+Let’s assume you have two virtual containers on the same network. — For the sake of the example let’s say they have the following configuration:
+
+```
+bastion:
+     IP: 10.0.0.10
+     GW: 10.0.0.1
+    SUB: 255.255.255.0
+
+app:
+    IP: 10.0.0.11
+    GW: 10.0.0.1
+   SUB: 255.255.255.0
+```
+
+(*i.e., two different containers that are on the same subnet*).
+
+Add the following code to the **`app`** instance:
+
+```javascript
+// file: server.js
+
+'use strict';
+
+import { trace, start } from 'kiraz';
+
+// opens a socket to the bastion.
+start( { host: '10.0.0.10', port: 4322 } );
+
+// polling interval.
+const INTERVAL = 467;
+
+setInterval( () => {
+    setImmediate( () => {
+        let delta = process.hrtime( start );
+
+        trace(
+            'eventloop:delay',
+            { delta: ( ( delta[ 0 ] * 10e9 +
+                delta[ 1 ] )  / ( 10e6 ) ) }
+        );
+
+        trace(
+            'memory:usage',
+            { percent: process.memoryUsage() }
+        );
+    } );
+}, INTERVAL );
+```
+
+> Note that the above script is written in a newer version of **JavaScript**, you might need to [transpile it][transpile] to make it work on your system.
+
+And put the following code to **bastion**:
+
+```javascript
+// file: trace-event-loop.js
+
+'use strict';
+
+// TODO: this library has not been put to the NMP yet.
+import chart from './chart';
+import clear from 'clear';
+
+exports.local = ( traces ) => {
+    let data = [];
+    let delays = [];
+    let POLL_INTERVAL = 1000;
+
+    traces.on( 'eventloop:delay', ( result ) => {
+        delays.push( result.delta );
+
+        if ( delays.length >= 10 ) {
+            delays.shift();
+        }
+
+        data.push( Math.max.apply( Math, delays ) );
     } );
 
-    console.log( 'Started listening to all the things…' );
+    setInterval( () => {
+        clear();
+
+        console.log( ' EVENT LOOP DELAY ' );
+        console.log( '+----------------+' );
+        console.log( chart( data ) );
+    }, POLL_INTERVAL );
+
+    console.log( 'Started listening…' );
 };
 ```
 
-call:
+> Note that the above script is writen in a newer version of **JavaScript**, you might need to [transpile it][transpile] to make it work on your system.
 
-```
-kiraz trace.js
-```
+Let’s summarize what we have done:
 
-I'll clean up this README whenever I have time.
+* **app**: a Node.JS virtual container that publishes its event loop delay.
+* **bastion**: An aggregation virtual container that can display those event loop delay measurements.
 
-Here are a few horizontal rules to indicate that you should **stop reading here**:
+Now, on the **bastion** container (*10.0.0.10*), run the following:
 
---------
+```bash
+# install `kiraz`,
+# if you haven’t already done soe.
+npm install kiraz -g
 
---------
-
---------
-
----------
-
---------
-
---------
-
---------
-
----------
-
-# jstrace
-
-  Dynamic tracing for JavaScript, written in JavaScript, providing you insight into your live nodejs applications, at the process, machine, or cluster level.
-
-  Similar to systems like [dtrace](http://dtrace.org/) or [ktap](http://www.ktap.org/), the goal of dynamic tracing is to enable a rich set of debugging information in live processes, often in production in order to help discover the root of an issue. These
-  libraries have very minimal overhead when disabled, and may be enabled
-  externally when needed.
-
-  View the [wiki](https://github.com/jstrace/jstrace/wiki) for additional information and libraries which may be helpful.
-
-## Installation
-
- Library:
-
-```
-$ npm install jstrace
+kiraz trace-event-loop.js
 ```
 
-  Client:
+And on the **app** container (*10.0.0.11*), run the following:
 
-```
-$ npm install -g jstrace
-```
-
-## Features
-
- - dynamic tracing :)
- - local / remote execution support
- - minimal overhead when idle
- - flexible scripting capabilities
- - probe name filtering
- - pid, process title, and hostname filtering
- - remote messaging for map/reduce style reporting
- - multi-process support, inspect your cluster in realtime
- - binds to `0.0.0.0:4322` (may need this for firewalls)
-
-## Usage
-
+```bash
+node server.js
 ```
 
-  Usage: jstrace [options] <script>
+Now you should be able to see an “*event loop delay*” on the terminal of the “**bastion**” virtual container.
 
-  Options:
+## Hey, I'm Stuck!
 
-    -h, --help             output usage information
-    -V, --version          output the version number
-    -p, --pid <pid>        trace with the given <pid>
-    -t, --title <pattern>  trace with title matching <pattern>
-    -H, --host <pattern>   trace with hostname matching <pattern>
+For any issues that you stumble upon, [feel free to open a ticket][create-issue], or [send and email][volkan].
 
-```
+## Versioning and Backwards Compatibility
 
-## Example
+`sif` follows [semantic versioning][semver] rules, and it is versioned in the "**major**.**minor**.**patch**" format.
 
-### Instrumentation
+* Any breaking backwards-incompatible change will increment the **major** version number.
+* Any backwards-compatible enhancement will increment the **minor** version
+number.
+* And any bug fixes that don't add extra features will increment the **patch** version number.
 
- Suppose for example you have probes set up to mark the
- start and end of an http request, you may want to quickly
- tap into the process and see which part of the request/response
- cycle is hindering latency.
+## Wanna Help?
 
- This contrived example isn't very exciting, and only has two
- probes, but it illustrates the capabilites. We simply mark the start and
- end of the request, as well as providing the request id.
+Contributors are more than welcome.
 
-```js
-var trace = require('jstrace');
-var http = require('http');
+You can help make `sif` even better by:
 
-var ids = 0;
+* [Suggesting new features by opening issues][create-issue].
+* [Cleaning up open issues][issues].
+* [Finding bugs in the code and creating issues for that][create-issue].
+* [Forking the code, making it better, and creating pull requests][git-pr].
 
-var server = http.createServer(function(req, res){
-  var id = ++ids;
+> **Note**
+>
+> If you are planning to contribute to the source code, we won't bore you with a giant list of coding conventions **:)**. It's your contribution that that matters.
+>
+> Instead of a formal style guide, take care to maintain the existing
+> coding style. Other than that, there's no formal contribution requirements.
 
-  trace('request:start', { id: id });
-  setTimeout(function(){
+## Contact Information
 
-    res.end('hello world');
-    trace('request:end', { id: id });
-  }, Math.random() * 250 | 0);
-});
+* **Project Owner**: [Volkan Özçelik](mailto:me@volkan.io)
+* **Project Website**: <https://github.com/v0lkan/kiraz>
 
-server.listen(3000);
-```
+## Credits
 
-### Local analysis
+`kiraz` is proudly built upon **[`jstrace`][jstrace]**.
 
- jstrace-local analysis is performed by exporting a `.local` function; When you invoke `.on()` jstrace internally broadcasts this information to the remotes when they connect and filters probes accordingly. The data is transmitted as-is from the remote for analysis.
+Thanks a lot to **[TJ Holowaychuk][tj]**, **[Julian Gruber][julian]** and the [contributors][contributors].
 
-```js
-exports.local = function(traces){
-  traces.on('request:*', function(trace){
-    console.log(trace);
-  });
-};
-```
+## License
 
- Local analysis can be expensive since entire objects are transferred, if you need less information or would prefer to distribute the load you can use the remote analysis feature.
+MIT-Licensed. — See [the license file](LICENSE.md) for details.
 
-### Remote analysis
+## Code of Conduct
 
- Remote analysis serializes the `.remote` function to the target processes for remote execution. This can be great for reporting on data that would be too expensive to transfer over the wire to `jstrace(1)`. For example suppose you just want to know the lengths of BLOBs sent to your API:
+We are committed to making participation in this project a harassment-free experience for everyone, regardless of the level of experience, gender, gender identity and expression, sexual orientation, disability, personal appearance, body size, race, ethnicity, age, religion, or nationality.
 
-```js
-exports.remote = function(traces){
-  traces.on('api:buffer', function(trace){
-    console.log(trace.buffer.length);
-  });
-};
-```
+[See the code of conduct for details](CODE_OF_CONDUCT.md).
 
-Note the use of `console.log()`, jstrace provides custom `console.log()`, `console.error()`, and `console.dir()` methods which report back to `jstrace(1)`. You'll now receive something like the following:
 
-```
-12323
-232
-32423
-2321
-```
 
-When analysing a machine or cluster it's useful to know which machine did what, so the `console.dir()` method prefixes with the hostname, process title, and pid:
 
-```
-api-1/api/1234 >> 123132
-api-1/api/1234 >> 3212
-api-2/api/1200 >> 4324
-```
 
- Note that unlike `.local` you need to `require()` your modules from within the `.remote` function.
-
-### Remote cleanup
-
- When you perform evented operations in your remote function, like `setInterval()` or listening for events on emitters other than `traces`, listen for the `"cleanup"` event in order to finish the trace script completely once the cli exits:
-
-```js
-exports.remote = function(traces){
-  traces.on('api:buffer', function(trace){
-    // will automatically be cleaned up
-  });
-
-  var id = setInterval(function(){
-    console.log(Date.now());
-  });
-
-  traces.on('cleanup', function(){
-    clearInterval(id);
-  });
-};
-```
-
-### Local & remote analysis
-
-  Local and remote methods may be used in tandem for map/reduce style reporting. Using `traces.emit()` in the `.remote` function you can transmit custom information back to `jstrace` for display or further analysis.
-
-```js
-var bytes = require('bytes');
-
-exports.remote = function(traces){
-  traces.on('api:buffer', function(trace){
-    traces.emit('buffer size', trace.buffer.length);
-  });
-};
-
-exports.local = function(traces){
-  traces.on('buffer size', function(n){
-    console.log('buffer %s', bytes(n));
-  });
-};
-```
-
- It's worth noting that `.on()` in `.local` is used for both remote probe subscription, _and_ events emitted by the `.remote`. Since they share this space you wouldn't want to emit similar names, for example `traces.emit('api:buffer', ...)` would be bad, since local would actually end up subscribing to the original trace _instead_ of the data emitted. This is rarely an issue but something to be aware of.
-
-### Full analysis example
-
- The `jstrace(1)` executable accepts a script which exports functions with trace patterns
- to match. These function names tell jstrace which traces to subscribe to. The `trace` object passed contains the information given to the in-processe `trace()` call, along with additional metadata such as `.timestamp`, `.hostname`, `.pid`, and `.title`.
-
- We can use this data to add anything we like, here we're simply mapping the requset ids to output deltas between the two. Note that we export the function named `.local`, there are two functions supported by jstrace, however `.local` means that the trace objects are sent over the wire and analysis is performed local to `jstrace(1)`.
-
-```js
-var m = {};
-
-exports.local = function(traces){
-  traces.on('request:start', function(trace){
-    m[trace.id] = trace.timestamp;
-  });
-
-  traces.on('request:end', function(trace){
-    var d = Date.now() - m[trace.id];
-    console.log('%s -> %sms', trace.id, d);
-  });
-};
-```
-
- To run the script just pass it to `jstrace(1)` and watch the output flow!
-
-```
-$ jstrace response-duration.js
-
-298 -> 50ms
-302 -> 34ms
-299 -> 112ms
-287 -> 184ms
-289 -> 188ms
-297 -> 124ms
-286 -> 218ms
-295 -> 195ms
-300 -> 167ms
-304 -> 161ms
-307 -> 116ms
-301 -> 206ms
-305 -> 136ms
-314 -> 19ms
-```
-
-### Plotting distribution
-
-  Using node modules such as [bars](https://github.com/jstrace/bars) can aid in analysis, for exmaple plotting the distribution of response status codes over time.
-
-```js
-var clear = require('clear');
-var bars = require('bars');
-
-var m = {};
-
-exports.local = function(traces){
-  traces.on('request:end', function(trace){
-    m[trace.status] = m[trace.status] || 0;
-    m[trace.status]++;
-  });
-};
-
-setInterval(function(){
-  clear();
-  console.log();
-  console.log(bars(m, { bar: '=', width: 30 }));
-}, 1000);
-```
-
-```
-  200 | ============================== | 6
-  404 | ====================           | 4
-  500 | ====================           | 4
-  505 | ===============                | 3
-  400 | ==========                     | 2
-  201 | =====                          | 1
-
-
-  201 | ============================== | 19
-  500 | ===========================    | 17
-  505 | =====================          | 13
-  200 | ===================            | 12
-  404 | ===================            | 12
-  400 | =================              | 11
-
-
-  500 | ============================== | 19
-  201 | ========================       | 15
-  200 | ===================            | 12
-  404 | ===================            | 12
-  505 | =================              | 11
-  400 | ===========                    | 7
-
-...
-```
-
- To reset the data per-interval tick all you'd have to do is add `m = {};` at the end of the `setInterval()` callback to refresh the data!
-
-### Charting
-
-  Create realtime charts using [chart](https://github.com/jstrace/chart) to monitor changes over time:
-
- ![](https://dl.dropboxusercontent.com/u/6396913/misc/Screen%20Shot%202014-02-27%20at%209.16.12%20AM.png)
-
-```js
-var chart = require('chart');
-var clear = require('clear');
-
-var data = [];
-var n = 0;
-
-exports.local = function(traces){
-  traces.on('request:end', function(trace){ n++ });
-};
-
-setInterval(function(){
-  data.push(n);
-  n = 0;
-  clear();
-  console.log(chart(data));
-}, 1000);
-
-```
-
-## Conventions
-
-### Naming probes
-
- In general you should use ":" as a separator for pattern matching, and prefix with something relevant for your module, such as the module's name. Here are some examples:
-
- - `express:request:start`
- - `express:socket:error`
- - `koa:request:start`
- - `koa:request:end`
- - `myapp:login`
- - `myapp:logout`
-
-You should also consider listing probe names with descriptions in your library or application readme file.
-
-### Dependency injection
-
- If your library supports tracing, it's best that you do _not_
- add jstrace as a dependency, instead you should provide a `trace` option
- to let the user pass in jstrace if they wish. Some people call this "dependency injection". For example:
-
-```js
-function MyLib(opts) {
-  opts = opts || {};
-  this.trace = opts.trace || function(){};
-  this.trace('something', { some: 'data' });
-}
-```
-
-  The premise here is that the community should start instrumenting libraries with this functionality so that node becomes easier to profile, monitor, and debug. This is especially important for detecting latency issues across async boundaries, as they not necessarily CPU-bound and may not show up in profiles at all.
-
-## Trace object
-
- The trace object sent to both local and remote subscription handlers.
-
- - `timestamp` timestamp at the time of invocation
- - `hostname` machine hostname
- - `title` process title
- - `pid` process id
- - `name` trace name
- - `*` all other properties given
-
-## Authors
-
- - TJ Holowaychuk
- - Julian Gruber
-
-# License
-
-  MIT
+[brendan]: http://www.brendangregg.com/index.html "About monitoring, performance, and all the things in between"
+[c9-debugging]: https://docs.c9.io/docs/running-and-debugging-code "Debugging in Cloud9 IDE"
+[contributors]: https://github.com/jstrace/jstrace/graphs/contributors "JSTrace Contributors"
+[create-issue]: https://github.com/v0lkan/kiraz/issues/new "Create an Issue"
+[debugger]: https://nodejs.org/api/debugger.html "Node.JS Debugger"
+[dtrace]: http://www.oracle.com/technetwork/server-storage/solaris/dtrace-tutorial-142317.html "Dtrace Tutorial"
+[dynamic-process-analysis]: http://www.wikiwand.com/en/Dynamic_program_analysis "Dynamic Process Analysis"
+[eclipse-debugging]: https://github.com/nodejs/node-v0.x-archive/wiki/Using-Eclipse-as-Node-Applications-Debugger "Using Eclipse as a Node Application Debugger"
+[git-pr]: https://help.github.com/articles/using-pull-requests/ "Pull Requests"
+[issues]: https://github.com/v0lkan/kiraz/issues
+[joyent-debug]: http://www.joyent.com/developers/node/debug "How to Debug Node.JS Applications"
+[jstrace]: http://github.com/jstrace/jstrace "JSTrace"
+[julian]: https://github.com/juliangruber "Juilian"
+[ktap]: http://ktap.org "KTap"
+[nodejs]: https://nodejs.org
+[npm]: https://www.npmjs.com
+[open-issues]: https://github.com/v0lkan/kiraz/issues "Issue List"
+[semver]: http://semver.org
+[tj]: https://twitter.com/tjholowaychuk "T.J."
+[transpile]: https://babeljs.io "Babel.JS"
+[vantage]: https://github.com/dthree/vantage "some node app — brand new point of view"
+[volkan]: mailto:me@volkan.io "Volkan Özçelik"
+[webstorm-debugging]: https://www.jetbrains.com/webstorm/help/run-debug-configuration-node-js-remote-debug.html "Remote debugging in Webstorm"
