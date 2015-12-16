@@ -52,9 +52,7 @@ When **debugging** a live app, you’ll have to restart your app in *debug mode*
 
 ## Is `kiraz` a dtrace|strace|ktap|etc. Replacement?
 
-Short answer:
-
-**No**.
+Short answer: **No**.
 
 At its very core, `kiraz` is a TCP client/server *pubsub* program that enables the user to inject and remotely execute tracing code.
 
@@ -226,7 +224,7 @@ The output should look similar to this:
 
 ## Hey, I'm Stuck!
 
-For any issues that you stumble upon, [feel free to open a ticket][create-issue], or [send and email][volkan].
+For any issues that you stumble upon, [feel free to open a ticket][create-issue], or [send an email][volkan].
 
 ## Versioning and Backwards Compatibility
 
