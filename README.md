@@ -1,3 +1,14 @@
+## Unmaintained Software
+
+I’m not actively contributing to this project at the moment.
+
+If you want to become a maintainer [please let me know](mailto:volkan.io)
+
+Thanks,
+
+Volkan.
+
+
 ```
 __.--~~.,-.__
 `~-._.-(`-.__`-.
